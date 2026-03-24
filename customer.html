@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Tracking - DLTS Cambodia</title>
+    <!-- Fonts and Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Leaflet Map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(90deg, #7F7FD5, #86A8E7, #91EAE4);
+            --header-purple: #7a6df7;
+            --button-blue: #6366f1;
+            --success-green: #6eba33;
+            --text-dark: #1f2937;
+            --text-muted: #6b7280;
+            --white: #ffffff;
+            --card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            --border-color: #e5e7eb;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            color: var(--text-dark);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding-bottom: 50px;
+        }
+
+        /* Header Styles */
+        header {
+            background-color: var(--header-purple);
+            padding: 15px 30px;
+            color: var(--white);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            z-index: 10;
+        }
+
+        .logo-container {
+            width: 45px;
+            height: 45px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.2rem;
+        }
+
+        .branding h1 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .branding p {
+            font-size: 0.85rem;
+            opacity: 0.9;
+        }
+
+        /* Hero Section */
+        .hero {
+            position: relative;
+            height: 60vh;
+            min-height: 450px;
+            background-image: linear-gradient(rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.15)), url('https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80');
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        /* Search Card */
+        .search-container {
+            background: var(--white);
+            padding: 10px;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 600px;
+            box-shadow: var(--card-shadow);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        .input-group {
+            flex-grow: 1;
+            padding: 5px 15px;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 2px;
+            font-weight: 500;
+        }
+
+        .input-group input {
+            width: 100%;
+            border: none;
+            padding: 5px 0;
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: var(--text-dark);
+            outline: none;
+            font-family: inherit;
+        }
+
+        .track-btn {
+            background-color: var(--button-blue);
+            color: var(--white);
+            border: none;
+            padding: 14px 45px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .track-btn:hover {
+            background-color: #4f46e5;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Info Card */
+        .page-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 25px;
+            padding: 0 20px;
+            margin-top: -80px;
+            position: relative;
+            z-index: 5;
+        }
+
+        .info-card, .result-card {
+            background: var(--white);
+            padding: 30px;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 850px;
+            box-shadow: var(--card-shadow);
+        }
+
+        .result-card {
+            display: none; /* Hidden by default */
+        }
+
+        .info-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .info-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .info-item i {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            margin-top: 4px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .info-content {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: #4b5563;
+        }
+
+        /* Result Card Styles */
+        .result-header {
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 25px;
+        }
+
+        .result-header h2 {
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--text-dark);
+            margin-bottom: 5px;
+        }
+
+        .result-header p {
+            font-size: 0.95rem;
+            color: var(--text-dark);
+        }
+
+        .status-overview {
+            margin-bottom: 35px;
+        }
+
+        .status-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #000;
+            margin-bottom: 15px;
+        }
+
+        .status-detail {
+            font-size: 0.95rem;
+            color: #000;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .status-detail span {
+            font-weight: 700;
+        }
+
+        /* Stepper Styles */
+        .stepper-container {
+            position: relative;
+            margin: 40px 0 20px 0;
+            padding: 0 10px;
+        }
+
+        .stepper-line-bg {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            height: 6px;
+            background-color: var(--border-color);
+            z-index: 1;
+            border-radius: 3px;
+        }
+
+        .stepper-line-fill {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: 100%; /* Fully complete according to image */
+            height: 6px;
+            background-color: var(--success-green);
+            z-index: 2;
+            border-radius: 3px;
+        }
+
+        .stepper-steps {
+            display: flex;
+            justify-content: space-between;
+            position: relative;
+            z-index: 3;
+        }
+
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 80px;
+        }
+
+        .step-dot {
+            width: 24px;
+            height: 24px;
+            background-color: var(--success-green);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.75rem;
+            margin-bottom: 12px;
+            border: 4px solid white;
+            box-shadow: 0 0 0 1px var(--success-green);
+        }
+
+        .step-label {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #000;
+            text-align: center;
+        }
+
+        /* Specific for 'In tranship' label */
+        .step:nth-child(3) .step-label {
+            white-space: nowrap;
+        }
+
+        /* Responsive Fixes */
+        @media (max-width: 640px) {
+            .search-container {
+                flex-direction: column;
+                padding: 20px;
+            }
+            .track-btn { width: 100%; }
+            .info-card, .result-card { padding: 20px; }
+            .step-label { font-size: 0.75rem; }
+            .stepper-line-bg, .stepper-line-fill { top: 8px; }
+            .step-dot { width: 20px; height: 20px; font-size: 0.6rem; border-width: 3px; }
+        }
+
+        /* Map Styles */
+        #map {
+            height: 300px;
+            width: 100%;
+            border-radius: 12px;
+            margin: 20px 0;
+            z-index: 1;
+            border: 1px solid var(--border-color);
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo-container">DL</div>
+        <div class="branding">
+            <h1>DLTS Cambodia</h1>
+            <p>Domestic Logistic Tracking - Gen-Z-UI</p>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="search-container">
+            <div class="input-group">
+                <label for="tracking-id">Enter your tracking number</label>
+                <input type="text" id="tracking-id" placeholder="KH-09876543" value="KH-09876543">
+            </div>
+            <button class="track-btn">Track</button>
+        </div>
+    </section>
+
+    <div class="page-content">
+        <!-- Contact Info Card -->
+        <div class="info-card">
+            <div class="info-item">
+                <i class="fa-solid fa-location-dot"></i>
+                <div class="info-content">
+                    Borey The Premier Land Sen Sok Avenue, No. 15, Street Betong, Phumi Bayab, Sangkat Phnom Penh Thmei, Khan Sen Sok, Phnom Penh, Cambodia.
+                </div>
+            </div>
+            <div class="info-item">
+                <i class="fa-solid fa-phone"></i>
+                <div class="info-content">
+                    +855 (0) 23 901 970 / 901 971
+                </div>
+            </div>
+            <div class="info-item">
+                <i class="fa-solid fa-envelope"></i>
+                <div class="info-content">
+                    info@arc.com.kh
+                </div>
+            </div>
+        </div>
+
+        <!-- Tracking Result Card -->
+        <div class="result-card">
+            <div class="result-header">
+                <h2>Enter your tracking number</h2>
+                <p>This shipment is handle by : Car093485</p>
+            </div>
+
+            <div class="status-overview">
+                <h3 class="status-title">Delivered</h3>
+                <p class="status-detail">Last Update : <span>Thursday, March 19, 2026 at 11:47 AM&nbsp;&nbsp;PHNOM PENH -KAM POT</span></p>
+                <p class="status-detail">Origin : <span>PHNOM Penh - Kampot</span></p>
+            </div>
+
+            <div id="map"></div>
+
+            <div class="stepper-container">
+                <div class="stepper-line-bg"></div>
+                <div class="stepper-line-fill"></div>
+                <div class="stepper-steps">
+                    <div class="step">
+                        <div class="step-dot"><i class="fa-solid fa-check"></i></div>
+                        <div class="step-label">Loading</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-dot"><i class="fa-solid fa-check"></i></div>
+                        <div class="step-label">On Route</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-dot"><i class="fa-solid fa-check"></i></div>
+                        <div class="step-label">In tranship</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-dot"><i class="fa-solid fa-check"></i></div>
+                        <div class="step-label">Delivered</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let map;
+
+        document.querySelector('.track-btn').addEventListener('click', function() {
+            const resultCard = document.querySelector('.result-card');
+            const trackingInput = document.getElementById('tracking-id');
+            
+            if (trackingInput.value.trim() !== "") {
+                // Show the result card
+                resultCard.style.display = 'block';
+                
+                // Initialize map if not already done
+                if (!map) {
+                    // Center on Phnom Penh, Cambodia
+                    map = L.map('map').setView([11.5564, 104.9282], 13);
+                    
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    }).addTo(map);
+
+                    // Add a custom marker for the delivery location
+                    const deliveryIcon = L.divIcon({
+                        html: '<i class="fa-solid fa-location-dot" style="color: #6366f1; font-size: 24px;"></i>',
+                        className: 'custom-div-icon',
+                        iconSize: [24, 24],
+                        iconAnchor: [12, 24]
+                    });
+
+                    L.marker([11.5564, 104.9282], { icon: deliveryIcon }).addTo(map)
+                        .bindPopup('<b>Current Location</b><br>Phnom Penh Office')
+                        .openPopup();
+                } else {
+                    // Refresh map size in case it was hidden
+                    setTimeout(() => {
+                        map.invalidateSize();
+                    }, 100);
+                }
+                
+                // Scroll to result card
+                resultCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } else {
+                alert("Please enter a tracking number");
+            }
+        });
+    </script>
+</body>
+</html>
